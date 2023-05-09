@@ -7,6 +7,9 @@
 
 #include "stm32f0xx.h"
 
+#define true 1 				// added to allow for true/false functionality in function ADC_busy
+#define false 0
+
 // GLOBAL VARIABLES ----------------------------------------------------------|
 
 
@@ -71,7 +74,8 @@ void trigger_ADC_conversion(void)
  * It returns true if the conversion is ongoing.
  * It returns false if the conversion is complete and data is ready.
  */
-_Bool ADC_busy(void)
+
+_Bool ADC_busy()
 {
 	return ((ADC1->ISR & ADC_ISR_EOC) == 0) ? true : false;  // This line uses the ternery operator
 }
@@ -88,7 +92,18 @@ uint16_t read_ADC_value(void)
 #if 0
 void init_timer_2(void)
 {
-
+	RCC-> AHBENR |= RCC_AHBENR_GPIOBEN; 			// Enable the clock for GPIO port B for PB10.
+	GPIOB -> MODER|= GPIO_MODER_MODER10_1; 			// set up pin PB10 as alternate function mode.
+	GPIOB -> AFR[1] |= (2 << (4 * 2));				// selecting AF for TIM2_CH3 for PB10.
+	RCC -> APB1ENR |= RCC_APB1ENR_TIM2EN; 			// Enable the clock for timer 2.
+	TIM2 -> PSC = 15; 								// PSC value for TIM2 [15kHz]
+	TIM2 -> ARR = 5000;								// ARR value for TIM2 [15kHz]
+	TIM2 -> CCR3 |= 1250; 							// 25% duty cycle.
+	TIM2 -> CCMR2 |= (TIM2_CCMR2_0C3M_2|
+					  TIM2_CCMR2_0C3M_1|
+					  TIM_CCMR2_OC3PE); 			// configure output mode for PWM
+	TIM2 -> CCER |= TIM_CCER_CC3E; 					// enable the output for the timer.
+	TIM2 -> CR1 |= TIM_CR1_CEN;						// enable the counter
 }
 #endif
 
